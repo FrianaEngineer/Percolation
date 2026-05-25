@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Percolation Explorer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Computational Systems</p>
+        <h1>Percolation Explorer</h1>
+        <p class="hero-text">
+          A compact website for presenting the percolation model and interacting with the same
+          open-site visual logic used in the Java visualizer.
+        </p>
+      </div>
+      <nav class="tab-nav" aria-label="Primary">
+        <button id="home-tab" class="tab-button active" type="button" data-tab-target="home" aria-selected="true">Home</button>
+        <button id="visualization-tab" class="tab-button" type="button" data-tab-target="visualization" aria-selected="false">Interactive Visualization</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="tab-panel active" id="home" aria-labelledby="home-tab">
+        <div class="home-grid">
+          <article class="info-card statement-card">
+            <p class="card-label">Overview</p>
+            <h2>What Percolation Means</h2>
+            <p>
+              Percolation is a way to study how something moves through a system. In this project,
+              the system is shown as a grid made of small squares. Each square can either be
+              blocked or open. If enough open squares connect from the top of the grid to the
+              bottom, then the system percolates. This means there is a complete path that allows
+              something, like water or electricity, to travel through.
+            </p>
+          </article>
+
+          <article class="info-card">
+            <p class="card-label">Example</p>
+            <h3>Water and Electricity</h3>
+            <p>
+              A simple way to imagine percolation is water moving through soil. If there are
+              enough connected empty spaces in the soil, water can pass through from the surface
+              to deeper layers. If the spaces are blocked or disconnected, the water cannot flow
+              all the way through. The same idea can also apply to electricity. If enough
+              conductive materials are connected, electricity can travel through the object. If
+              not, the material stays insulated.
+            </p>
+          </article>
+
+          <article class="info-card">
+            <p class="card-label">Threshold</p>
+            <h3>When a Path Appears</h3>
+            <p>
+              Percolation is important because it helps us understand when a connected path forms
+              in a random system. At first, only a few spaces might be open, so nothing can move
+              very far. But as more spaces open, the system eventually reaches a point where a
+              full path suddenly appears. This point is called the percolation threshold. It tells
+              us about the moment when the system changes from not connected to connected.
+            </p>
+          </article>
+
+          <article class="info-card accent-card">
+            <p class="card-label">Applications</p>
+            <h3>Why It Matters</h3>
+            <p>
+              This connects to real-world problems because many systems depend on whether paths
+              exist. Scientists can use percolation to model water draining through land, oil
+              moving through rock, diseases spreading through populations, electricity passing
+              through materials, or even information spreading through networks. In computer
+              science, percolation is useful because it turns a real-world movement problem into a
+              connectivity problem. By checking which parts are connected, we can predict whether
+              the system allows flow from one side to another.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="visualization" aria-labelledby="visualization-tab">
+        <div class="viz-layout">
+          <aside class="control-panel">
+            <p class="card-label">Controls</p>
+            <h2>Interactive Visualization</h2>
+            <p class="control-text">
+              Click any square in the grid to open it. The browser version follows the same
+              percolation rules as your Java implementation, including the separate fullness check
+              to avoid backwash.
+            </p>
+
+            <label class="control-group" for="grid-size">
+              <span>Grid Size</span>
+              <div class="slider-row">
+                <input id="grid-size" type="range" min="5" max="30" value="10">
+                <output id="grid-size-value" for="grid-size">10 × 10</output>
+              </div>
+            </label>
+
+            <div class="button-row">
+              <button id="reset-grid" class="action-button" type="button">Reset Grid</button>
+              <button id="random-fill" class="ghost-button" type="button">Open Random Site</button>
+            </div>
+
+            <div class="legend">
+              <div class="legend-item">
+                <span class="swatch blocked"></span>
+                <span>Blocked</span>
+              </div>
+              <div class="legend-item">
+                <span class="swatch open"></span>
+                <span>Open</span>
+              </div>
+              <div class="legend-item">
+                <span class="swatch full"></span>
+                <span>Full</span>
+              </div>
+            </div>
+          </aside>
+
+          <section class="viz-card">
+            <div class="canvas-frame">
+              <canvas id="percolation-canvas" width="900" height="900" aria-label="Interactive percolation grid"></canvas>
+            </div>
+            <div class="status-row">
+              <p id="open-count">0 open sites</p>
+              <p id="percolation-status">does not percolate</p>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
