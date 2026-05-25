@@ -162,6 +162,10 @@ function activateTab(targetId) {
   tabPanels.forEach((panel) => {
     panel.classList.toggle("active", panel.id === targetId);
   });
+
+  if (targetId === "visualization") {
+    window.requestAnimationFrame(drawGrid);
+  }
 }
 
 function updateStatus() {
