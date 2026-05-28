@@ -167,6 +167,23 @@ let model = new PercolationModel(Number(gridSizeInput.value));
 let pendingVisualizationDraw = null;
 let pendingThresholdDraw = null;
 let thresholdRunId = 0;
+const hasThresholdUI = [
+  thresholdGridSizeInput,
+  thresholdGridSizeValue,
+  thresholdTrialsInput,
+  thresholdTrialsValue,
+  thresholdProgress,
+  thresholdPreviewOpen,
+  thresholdPreviewValue,
+  resultMean,
+  resultStddev,
+  resultLow,
+  resultHigh,
+  runThresholdButton,
+  rerunPreviewButton,
+  thresholdCanvas,
+  thresholdContext
+].every(Boolean);
 
 function scheduleDraw(kind, drawFn) {
   if (kind === "visualization" && pendingVisualizationDraw !== null) {
@@ -216,7 +233,9 @@ function activateTab(targetId) {
   }
 
   if (targetId === "threshold") {
-    scheduleDraw("threshold", drawThresholdPreview);
+    if (hasThresholdUI) {
+      scheduleDraw("threshold", drawThresholdPreview);
+    }
   }
 }
 
@@ -291,13 +310,21 @@ function openCellFromPointer(event) {
   }
 }
 
-let thresholdPreviewModel = new PercolationModel(Number(thresholdGridSizeInput.value));
+let thresholdPreviewModel = hasThresholdUI
+  ? new PercolationModel(Number(thresholdGridSizeInput.value))
+  : null;
 
 function drawThresholdPreview() {
+  if (!hasThresholdUI || !thresholdPreviewModel) {
+    return;
+  }
   drawModel(thresholdCanvas, thresholdContext, thresholdPreviewModel);
 }
 
 function updateThresholdOutputs(size, trials) {
+  if (!hasThresholdUI) {
+    return;
+  }
   thresholdGridSizeValue.textContent = `${size} × ${size}`;
   thresholdTrialsValue.textContent = `${trials} trials`;
 }
@@ -333,6 +360,9 @@ function stddev(values, avg) {
 }
 
 function updateThresholdResults(avg, deviation, low, high) {
+  if (!hasThresholdUI) {
+    return;
+  }
   resultMean.textContent = avg.toFixed(4);
   resultStddev.textContent = deviation.toFixed(4);
   resultLow.textContent = low.toFixed(4);
@@ -340,6 +370,9 @@ function updateThresholdResults(avg, deviation, low, high) {
 }
 
 async function runThresholdSimulation(trials, size) {
+  if (!hasThresholdUI) {
+    return;
+  }
   thresholdRunId += 1;
   const runId = thresholdRunId;
   runThresholdButton.disabled = true;
@@ -377,6 +410,9 @@ async function runThresholdSimulation(trials, size) {
 }
 
 function runSinglePreviewTrial(size) {
+  if (!hasThresholdUI) {
+    return;
+  }
   const trial = performThresholdTrial(size);
   thresholdPreviewModel = trial.model;
   thresholdPreviewOpen.textContent = `${trial.openSites} open sites`;
@@ -411,43 +447,47 @@ randomFillButton.addEventListener("click", () => {
 
 canvas.addEventListener("click", openCellFromPointer);
 
-thresholdGridSizeInput.addEventListener("input", () => {
-  updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
-});
+if (hasThresholdUI) {
+  thresholdGridSizeInput.addEventListener("input", () => {
+    updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
+  });
 
-thresholdTrialsInput.addEventListener("input", () => {
-  updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
-});
+  thresholdTrialsInput.addEventListener("input", () => {
+    updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
+  });
 
-thresholdGridSizeInput.addEventListener("change", () => {
-  const size = Number(thresholdGridSizeInput.value);
-  thresholdPreviewModel = new PercolationModel(size);
-  thresholdPreviewOpen.textContent = "0 open sites";
-  thresholdPreviewValue.textContent = "threshold 0.0000";
-  scheduleDraw("threshold", drawThresholdPreview);
-});
+  thresholdGridSizeInput.addEventListener("change", () => {
+    const size = Number(thresholdGridSizeInput.value);
+    thresholdPreviewModel = new PercolationModel(size);
+    thresholdPreviewOpen.textContent = "0 open sites";
+    thresholdPreviewValue.textContent = "threshold 0.0000";
+    scheduleDraw("threshold", drawThresholdPreview);
+  });
 
-runThresholdButton.addEventListener("click", () => {
-  runThresholdSimulation(Number(thresholdTrialsInput.value), Number(thresholdGridSizeInput.value));
-});
+  runThresholdButton.addEventListener("click", () => {
+    runThresholdSimulation(Number(thresholdTrialsInput.value), Number(thresholdGridSizeInput.value));
+  });
 
-rerunPreviewButton.addEventListener("click", () => {
-  runSinglePreviewTrial(Number(thresholdGridSizeInput.value));
-});
+  rerunPreviewButton.addEventListener("click", () => {
+    runSinglePreviewTrial(Number(thresholdGridSizeInput.value));
+  });
+}
 
 window.addEventListener("resize", () => {
   if (document.getElementById("visualization").classList.contains("active")) {
     drawGrid();
   }
-  if (document.getElementById("threshold").classList.contains("active")) {
+  if (hasThresholdUI && document.getElementById("threshold").classList.contains("active")) {
     drawThresholdPreview();
   }
 });
 
 window.addEventListener("load", () => {
-  updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
   activateTab("home");
   resetModel(Number(gridSizeInput.value));
-  thresholdPreviewModel = new PercolationModel(Number(thresholdGridSizeInput.value));
-  drawThresholdPreview();
+  if (hasThresholdUI) {
+    updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
+    thresholdPreviewModel = new PercolationModel(Number(thresholdGridSizeInput.value));
+    drawThresholdPreview();
+  }
 });
