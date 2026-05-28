@@ -16,7 +16,6 @@ class WeightedQuickUnionUF {
   union(a, b) {
     const rootA = this.find(a);
     const rootB = this.find(b);
-
     if (rootA === rootB) {
       return;
     }
@@ -93,7 +92,6 @@ class PercolationModel {
     this.openSites += 1;
 
     const current = this.index(row, col);
-
     if (row === 0) {
       this.uf.union(current, this.virtualTop);
       this.fullnessUf.union(current, this.virtualTop);
@@ -107,7 +105,6 @@ class PercolationModel {
     this.connectIfOpen(row, col, row + 1, col);
     this.connectIfOpen(row, col, row, col - 1);
     this.connectIfOpen(row, col, row, col + 1);
-
     return true;
   }
 
@@ -140,8 +137,24 @@ const randomFillButton = document.getElementById("random-fill");
 const openCount = document.getElementById("open-count");
 const percolationStatus = document.getElementById("percolation-status");
 
+const thresholdGridSizeInput = document.getElementById("threshold-grid-size");
+const thresholdGridSizeValue = document.getElementById("threshold-grid-size-value");
+const thresholdTrialsInput = document.getElementById("threshold-trials");
+const thresholdTrialsValue = document.getElementById("threshold-trials-value");
+const thresholdProgress = document.getElementById("threshold-progress");
+const thresholdPreviewOpen = document.getElementById("threshold-preview-open");
+const thresholdPreviewValue = document.getElementById("threshold-preview-value");
+const resultMean = document.getElementById("result-mean");
+const resultStddev = document.getElementById("result-stddev");
+const resultLow = document.getElementById("result-low");
+const resultHigh = document.getElementById("result-high");
+const runThresholdButton = document.getElementById("run-threshold");
+const rerunPreviewButton = document.getElementById("rerun-preview");
+
 const canvas = document.getElementById("percolation-canvas");
 const context = canvas.getContext("2d");
+const thresholdCanvas = document.getElementById("threshold-canvas");
+const thresholdContext = thresholdCanvas.getContext("2d");
 
 const COLORS = {
   blocked: "#050505",
@@ -151,6 +164,41 @@ const COLORS = {
 };
 
 let model = new PercolationModel(Number(gridSizeInput.value));
+let pendingVisualizationDraw = null;
+let pendingThresholdDraw = null;
+let thresholdRunId = 0;
+
+function scheduleDraw(kind, drawFn) {
+  if (kind === "visualization" && pendingVisualizationDraw !== null) {
+    window.cancelAnimationFrame(pendingVisualizationDraw);
+  }
+  if (kind === "threshold" && pendingThresholdDraw !== null) {
+    window.cancelAnimationFrame(pendingThresholdDraw);
+  }
+
+  const firstFrame = window.requestAnimationFrame(() => {
+    const secondFrame = window.requestAnimationFrame(() => {
+      if (kind === "visualization") {
+        pendingVisualizationDraw = null;
+      } else {
+        pendingThresholdDraw = null;
+      }
+      drawFn();
+    });
+
+    if (kind === "visualization") {
+      pendingVisualizationDraw = secondFrame;
+    } else {
+      pendingThresholdDraw = secondFrame;
+    }
+  });
+
+  if (kind === "visualization") {
+    pendingVisualizationDraw = firstFrame;
+  } else {
+    pendingThresholdDraw = firstFrame;
+  }
+}
 
 function activateTab(targetId) {
   tabButtons.forEach((button) => {
@@ -164,7 +212,52 @@ function activateTab(targetId) {
   });
 
   if (targetId === "visualization") {
-    window.requestAnimationFrame(drawGrid);
+    scheduleDraw("visualization", drawGrid);
+  }
+
+  if (targetId === "threshold") {
+    scheduleDraw("threshold", drawThresholdPreview);
+  }
+}
+
+function resizeCanvasForDisplay(targetCanvas) {
+  const displayWidth = targetCanvas.clientWidth;
+  const scale = window.devicePixelRatio || 1;
+  const nextWidth = Math.max(1, Math.round(displayWidth * scale));
+
+  if (targetCanvas.width !== nextWidth || targetCanvas.height !== nextWidth) {
+    targetCanvas.width = nextWidth;
+    targetCanvas.height = nextWidth;
+  }
+}
+
+function drawModel(targetCanvas, targetContext, sourceModel) {
+  resizeCanvasForDisplay(targetCanvas);
+
+  const size = sourceModel.size;
+  const cellSize = targetCanvas.width / size;
+
+  targetContext.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+  targetContext.fillStyle = COLORS.blocked;
+  targetContext.fillRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (sourceModel.isFull(row, col)) {
+        targetContext.fillStyle = COLORS.full;
+      } else if (sourceModel.isOpen(row, col)) {
+        targetContext.fillStyle = COLORS.open;
+      } else {
+        targetContext.fillStyle = COLORS.blocked;
+      }
+
+      const x = col * cellSize;
+      const y = row * cellSize;
+      targetContext.fillRect(x, y, cellSize, cellSize);
+      targetContext.strokeStyle = COLORS.line;
+      targetContext.lineWidth = Math.max(1, targetCanvas.width / 700);
+      targetContext.strokeRect(x, y, cellSize, cellSize);
+    }
   }
 }
 
@@ -173,46 +266,8 @@ function updateStatus() {
   percolationStatus.textContent = model.percolates() ? "percolates" : "does not percolate";
 }
 
-function resizeCanvasForDisplay() {
-  const displayWidth = canvas.clientWidth;
-  const scale = window.devicePixelRatio || 1;
-  const nextWidth = Math.round(displayWidth * scale);
-
-  if (canvas.width !== nextWidth || canvas.height !== nextWidth) {
-    canvas.width = nextWidth;
-    canvas.height = nextWidth;
-  }
-}
-
 function drawGrid() {
-  resizeCanvasForDisplay();
-
-  const size = model.size;
-  const cellSize = canvas.width / size;
-
-  context.clearRect(0, 0, canvas.width, canvas.height);
-  context.fillStyle = COLORS.blocked;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-
-  for (let row = 0; row < size; row += 1) {
-    for (let col = 0; col < size; col += 1) {
-      if (model.isFull(row, col)) {
-        context.fillStyle = COLORS.full;
-      } else if (model.isOpen(row, col)) {
-        context.fillStyle = COLORS.open;
-      } else {
-        context.fillStyle = COLORS.blocked;
-      }
-
-      const x = col * cellSize;
-      const y = row * cellSize;
-      context.fillRect(x, y, cellSize, cellSize);
-      context.strokeStyle = COLORS.line;
-      context.lineWidth = Math.max(1, canvas.width / 700);
-      context.strokeRect(x, y, cellSize, cellSize);
-    }
-  }
-
+  drawModel(canvas, context, model);
   updateStatus();
 }
 
@@ -234,6 +289,100 @@ function openCellFromPointer(event) {
   if (model.open(row, col)) {
     drawGrid();
   }
+}
+
+let thresholdPreviewModel = new PercolationModel(Number(thresholdGridSizeInput.value));
+
+function drawThresholdPreview() {
+  drawModel(thresholdCanvas, thresholdContext, thresholdPreviewModel);
+}
+
+function updateThresholdOutputs(size, trials) {
+  thresholdGridSizeValue.textContent = `${size} × ${size}`;
+  thresholdTrialsValue.textContent = `${trials} trials`;
+}
+
+function performThresholdTrial(size) {
+  const trialModel = new PercolationModel(size);
+  while (!trialModel.percolates()) {
+    trialModel.openRandomBlockedSite();
+  }
+
+  return {
+    threshold: trialModel.numberOfOpenSites() / (size * size),
+    openSites: trialModel.numberOfOpenSites(),
+    model: trialModel
+  };
+}
+
+function mean(values) {
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function stddev(values, avg) {
+  if (values.length <= 1) {
+    return 0;
+  }
+
+  const variance = values.reduce((sum, value) => {
+    const diff = value - avg;
+    return sum + diff * diff;
+  }, 0) / (values.length - 1);
+
+  return Math.sqrt(variance);
+}
+
+function updateThresholdResults(avg, deviation, low, high) {
+  resultMean.textContent = avg.toFixed(4);
+  resultStddev.textContent = deviation.toFixed(4);
+  resultLow.textContent = low.toFixed(4);
+  resultHigh.textContent = high.toFixed(4);
+}
+
+async function runThresholdSimulation(trials, size) {
+  thresholdRunId += 1;
+  const runId = thresholdRunId;
+  runThresholdButton.disabled = true;
+  rerunPreviewButton.disabled = true;
+  thresholdProgress.textContent = `Running ${trials} trials on a ${size} × ${size} grid...`;
+
+  const thresholds = [];
+
+  for (let trialIndex = 0; trialIndex < trials; trialIndex += 1) {
+    if (runId !== thresholdRunId) {
+      return;
+    }
+
+    const trial = performThresholdTrial(size);
+    thresholds.push(trial.threshold);
+    thresholdPreviewModel = trial.model;
+    thresholdPreviewOpen.textContent = `${trial.openSites} open sites`;
+    thresholdPreviewValue.textContent = `threshold ${trial.threshold.toFixed(4)}`;
+    drawThresholdPreview();
+    thresholdProgress.textContent = `Completed ${trialIndex + 1} of ${trials} trials...`;
+
+    if ((trialIndex + 1) % 5 === 0) {
+      await new Promise((resolve) => window.setTimeout(resolve, 0));
+    }
+  }
+
+  const avg = mean(thresholds);
+  const deviation = stddev(thresholds, avg);
+  const margin = 1.96 * deviation / Math.sqrt(trials);
+
+  updateThresholdResults(avg, deviation, avg - margin, avg + margin);
+  thresholdProgress.textContent = `Finished ${trials} trials.`;
+  runThresholdButton.disabled = false;
+  rerunPreviewButton.disabled = false;
+}
+
+function runSinglePreviewTrial(size) {
+  const trial = performThresholdTrial(size);
+  thresholdPreviewModel = trial.model;
+  thresholdPreviewOpen.textContent = `${trial.openSites} open sites`;
+  thresholdPreviewValue.textContent = `threshold ${trial.threshold.toFixed(4)}`;
+  drawThresholdPreview();
+  thresholdProgress.textContent = "Preview updated from one trial.";
 }
 
 tabButtons.forEach((button) => {
@@ -262,7 +411,43 @@ randomFillButton.addEventListener("click", () => {
 
 canvas.addEventListener("click", openCellFromPointer);
 
-window.addEventListener("resize", drawGrid);
+thresholdGridSizeInput.addEventListener("input", () => {
+  updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
+});
 
-activateTab("home");
-resetModel(Number(gridSizeInput.value));
+thresholdTrialsInput.addEventListener("input", () => {
+  updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
+});
+
+thresholdGridSizeInput.addEventListener("change", () => {
+  const size = Number(thresholdGridSizeInput.value);
+  thresholdPreviewModel = new PercolationModel(size);
+  thresholdPreviewOpen.textContent = "0 open sites";
+  thresholdPreviewValue.textContent = "threshold 0.0000";
+  scheduleDraw("threshold", drawThresholdPreview);
+});
+
+runThresholdButton.addEventListener("click", () => {
+  runThresholdSimulation(Number(thresholdTrialsInput.value), Number(thresholdGridSizeInput.value));
+});
+
+rerunPreviewButton.addEventListener("click", () => {
+  runSinglePreviewTrial(Number(thresholdGridSizeInput.value));
+});
+
+window.addEventListener("resize", () => {
+  if (document.getElementById("visualization").classList.contains("active")) {
+    drawGrid();
+  }
+  if (document.getElementById("threshold").classList.contains("active")) {
+    drawThresholdPreview();
+  }
+});
+
+window.addEventListener("load", () => {
+  updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
+  activateTab("home");
+  resetModel(Number(gridSizeInput.value));
+  thresholdPreviewModel = new PercolationModel(Number(thresholdGridSizeInput.value));
+  drawThresholdPreview();
+});

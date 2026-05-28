@@ -13,13 +13,14 @@
         <p class="eyebrow">Computational Systems</p>
         <h1>Percolation Explorer</h1>
         <p class="hero-text">
-          A compact website for presenting the percolation model and interacting with the same
-          open-site visual logic used in the Java visualizer.
+          Explore connected paths in a random grid, interact with the system directly, and estimate
+          the percolation threshold with Monte Carlo simulation.
         </p>
       </div>
       <nav class="tab-nav" aria-label="Primary">
         <button id="home-tab" class="tab-button active" type="button" data-tab-target="home" aria-selected="true">Home</button>
         <button id="visualization-tab" class="tab-button" type="button" data-tab-target="visualization" aria-selected="false">Interactive Visualization</button>
+        <button id="threshold-tab" class="tab-button" type="button" data-tab-target="threshold" aria-selected="false">Threshold</button>
       </nav>
     </header>
 
@@ -58,8 +59,7 @@
               Percolation is important because it helps us understand when a connected path forms
               in a random system. At first, only a few spaces might be open, so nothing can move
               very far. But as more spaces open, the system eventually reaches a point where a
-              full path suddenly appears. This point is called the percolation threshold. It tells
-              us about the moment when the system changes from not connected to connected.
+              full path suddenly appears. This point is called the percolation threshold.
             </p>
           </article>
 
@@ -67,13 +67,10 @@
             <p class="card-label">Applications</p>
             <h3>Why It Matters</h3>
             <p>
-              This connects to real-world problems because many systems depend on whether paths
-              exist. Scientists can use percolation to model water draining through land, oil
-              moving through rock, diseases spreading through populations, electricity passing
-              through materials, or even information spreading through networks. In computer
-              science, percolation is useful because it turns a real-world movement problem into a
-              connectivity problem. By checking which parts are connected, we can predict whether
-              the system allows flow from one side to another.
+              Percolation can model water draining through land, oil moving through rock, diseases
+              spreading through populations, electricity passing through materials, or information
+              spreading through networks. In computer science, it turns a flow problem into a
+              connectivity problem.
             </p>
           </article>
         </div>
@@ -85,9 +82,8 @@
             <p class="card-label">Controls</p>
             <h2>Interactive Visualization</h2>
             <p class="control-text">
-              Click any square in the grid to open it. The browser version follows the same
-              percolation rules as your Java implementation, including the separate fullness check
-              to avoid backwash.
+              Click any square in the grid to open it. Blue cells are full, meaning they are
+              connected to the top by an open path.
             </p>
 
             <label class="control-group" for="grid-size">
@@ -121,13 +117,105 @@
 
           <section class="viz-card">
             <div class="canvas-frame">
-              <canvas id="percolation-canvas" width="900" height="900" aria-label="Interactive percolation grid"></canvas>
+              <canvas id="percolation-canvas" width="640" height="640" aria-label="Interactive percolation grid"></canvas>
             </div>
             <div class="status-row">
               <p id="open-count">0 open sites</p>
               <p id="percolation-status">does not percolate</p>
             </div>
           </section>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="threshold" aria-labelledby="threshold-tab">
+        <div class="threshold-stack">
+          <article class="info-card threshold-explainer">
+            <p class="card-label">Monte Carlo Simulation</p>
+            <h2>Estimating the Percolation Threshold</h2>
+            <p>
+              Start with every site blocked. Then repeatedly choose one blocked site uniformly at
+              random and open it. When the system first percolates, record the fraction of sites
+              that are open. That fraction is one estimate of the percolation threshold.
+            </p>
+            <p>
+              By repeating this experiment many times and averaging the results, we get a more
+              reliable estimate. The simulation below reports the sample mean, sample standard
+              deviation, and a 95% confidence interval.
+            </p>
+            <div class="formula-card">
+              <p><strong>Mean:</strong> μ = (x₁ + x₂ + ... + x<sub>T</sub>) / T</p>
+              <p><strong>Std. dev.:</strong> σ = sqrt( Σ(xᵢ - μ)² / (T - 1) )</p>
+              <p><strong>95% CI:</strong> μ ± 1.96σ / sqrt(T)</p>
+            </div>
+          </article>
+
+          <div class="threshold-layout">
+            <aside class="control-panel threshold-controls">
+              <p class="card-label">Experiment Setup</p>
+              <h2>Threshold</h2>
+              <p class="control-text">
+                Choose the grid size and number of trials, then run the simulation. The preview
+                shows the final state of the most recent trial at the moment percolation occurs.
+              </p>
+
+              <label class="control-group" for="threshold-grid-size">
+                <span>Grid Size</span>
+                <div class="slider-row">
+                  <input id="threshold-grid-size" type="range" min="5" max="40" value="20">
+                  <output id="threshold-grid-size-value" for="threshold-grid-size">20 × 20</output>
+                </div>
+              </label>
+
+              <label class="control-group" for="threshold-trials">
+                <span>Number of Trials</span>
+                <div class="slider-row">
+                  <input id="threshold-trials" type="range" min="10" max="150" step="5" value="30">
+                  <output id="threshold-trials-value" for="threshold-trials">30 trials</output>
+                </div>
+              </label>
+
+              <div class="button-row">
+                <button id="run-threshold" class="action-button" type="button">Run Simulation</button>
+                <button id="rerun-preview" class="ghost-button" type="button">Run One Trial</button>
+              </div>
+
+              <p id="threshold-progress" class="microcopy">Ready to simulate.</p>
+            </aside>
+
+            <section class="threshold-visuals">
+              <article class="viz-card threshold-preview-card">
+                <div class="canvas-frame">
+                  <canvas id="threshold-canvas" width="520" height="520" aria-label="Threshold trial preview"></canvas>
+                </div>
+                <div class="status-row threshold-status-row">
+                  <p id="threshold-preview-open">0 open sites</p>
+                  <p id="threshold-preview-value">threshold 0.0000</p>
+                </div>
+              </article>
+
+              <article class="results-card">
+                <p class="card-label">Results</p>
+                <div class="results-grid">
+                  <div>
+                    <span class="result-label">Sample Mean</span>
+                    <strong id="result-mean">0.0000</strong>
+                  </div>
+                  <div>
+                    <span class="result-label">Std. Deviation</span>
+                    <strong id="result-stddev">0.0000</strong>
+                  </div>
+                  <div>
+                    <span class="result-label">95% Confidence Low</span>
+                    <strong id="result-low">0.0000</strong>
+                  </div>
+                  <div>
+                    <span class="result-label">95% Confidence High</span>
+                    <strong id="result-high">0.0000</strong>
+                  </div>
+                </div>
+              </article>
+            </section>
+          </div>
         </div>
       </section>
     </main>

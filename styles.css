@@ -49,7 +49,8 @@ body {
 
 .hero h1,
 .control-panel h2,
-.statement-card h2 {
+.statement-card h2,
+.threshold-explainer h2 {
   margin: 0;
   font-size: clamp(2.4rem, 5vw, 4.8rem);
   line-height: 0.96;
@@ -57,7 +58,8 @@ body {
 
 .hero-text,
 .info-card p,
-.control-text {
+.control-text,
+.microcopy {
   max-width: 62ch;
   font-size: 1rem;
   line-height: 1.65;
@@ -78,7 +80,7 @@ body {
   padding: 12px 18px;
   font: inherit;
   cursor: pointer;
-  transition: transform 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+  transition: transform 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease, opacity 140ms ease;
 }
 
 .tab-button {
@@ -97,6 +99,12 @@ body {
   transform: translateY(-1px);
 }
 
+button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+  transform: none;
+}
+
 .tab-panel {
   display: none;
 }
@@ -107,7 +115,8 @@ body {
 }
 
 .home-grid,
-.viz-layout {
+.viz-layout,
+.threshold-layout {
   display: grid;
   gap: 18px;
 }
@@ -118,7 +127,8 @@ body {
 
 .info-card,
 .control-panel,
-.viz-card {
+.viz-card,
+.results-card {
   border: 1px solid rgba(23, 23, 23, 0.08);
   border-radius: 28px;
   background: var(--panel);
@@ -126,7 +136,8 @@ body {
   box-shadow: var(--shadow);
 }
 
-.info-card {
+.info-card,
+.results-card {
   padding: 24px;
 }
 
@@ -143,7 +154,8 @@ body {
   grid-column: span 5;
 }
 
-.viz-layout {
+.viz-layout,
+.threshold-layout {
   grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
   align-items: start;
 }
@@ -252,10 +264,14 @@ canvas {
   display: block;
   width: 640px;
   height: 640px;
-  max-width: 640px;
-  max-height: 640px;
+  max-width: 100%;
   aspect-ratio: 1 / 1;
   background: #050505;
+}
+
+#threshold-canvas {
+  width: 520px;
+  height: 520px;
 }
 
 .status-row {
@@ -271,6 +287,64 @@ canvas {
   margin: 0;
 }
 
+.threshold-stack {
+  display: grid;
+  gap: 18px;
+}
+
+.threshold-explainer h2 {
+  font-size: clamp(2rem, 3vw, 3rem);
+  margin-bottom: 16px;
+}
+
+.formula-card {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(101, 181, 228, 0.14);
+  border: 1px solid rgba(23, 23, 23, 0.08);
+}
+
+.formula-card p {
+  margin: 0;
+}
+
+.formula-card p + p {
+  margin-top: 10px;
+}
+
+.threshold-visuals {
+  display: grid;
+  gap: 18px;
+}
+
+.threshold-preview-card {
+  align-items: stretch;
+}
+
+.threshold-status-row {
+  width: min(100%, 560px);
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.result-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.results-grid strong {
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -279,6 +353,16 @@ canvas {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .threshold-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .threshold-controls {
+    position: static;
   }
 }
 
@@ -310,15 +394,19 @@ canvas {
     gap: 18px;
   }
 
-  .status-row {
+  .status-row,
+  .threshold-status-row {
     flex-direction: column;
     font-size: 1.1rem;
   }
 
-  canvas {
+  canvas,
+  #threshold-canvas {
     width: 100%;
     height: auto;
-    max-width: none;
-    max-height: none;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
   }
 }
