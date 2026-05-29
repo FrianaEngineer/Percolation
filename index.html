@@ -21,6 +21,7 @@
         <button id="home-tab" class="tab-button active" type="button" data-tab-target="home" aria-selected="true">Home</button>
         <button id="visualization-tab" class="tab-button" type="button" data-tab-target="visualization" aria-selected="false">Interactive Visualization</button>
         <button id="threshold-tab" class="tab-button" type="button" data-tab-target="threshold" aria-selected="false">Threshold</button>
+        <a class="tab-button tab-link" href="https://github.com/FrianaEngineer/Percolation" target="_blank" rel="noreferrer">Source Code</a>
       </nav>
     </header>
 
@@ -190,6 +191,19 @@
                 <div class="status-row threshold-status-row">
                   <p id="threshold-preview-open">0 open sites</p>
                   <p id="threshold-preview-value">threshold 0.0000</p>
+                </div>
+              </article>
+
+              <article class="results-card graph-card">
+                <p class="card-label">Threshold Graph</p>
+                <h3>Transition Curve</h3>
+                <p class="graph-copy">
+                  The blue curve shows how likely the system is to percolate as the fraction of
+                  open sites increases across the Monte Carlo trials. The red line marks the
+                  estimated threshold.
+                </p>
+                <div class="graph-frame">
+                  <canvas id="threshold-graph" width="760" height="420" aria-label="Percolation threshold graph"></canvas>
                 </div>
               </article>
 

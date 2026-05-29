@@ -155,6 +155,8 @@ const canvas = document.getElementById("percolation-canvas");
 const context = canvas.getContext("2d");
 const thresholdCanvas = document.getElementById("threshold-canvas");
 const thresholdContext = thresholdCanvas.getContext("2d");
+const thresholdGraphCanvas = document.getElementById("threshold-graph");
+const thresholdGraphContext = thresholdGraphCanvas.getContext("2d");
 
 const COLORS = {
   blocked: "#050505",
@@ -167,6 +169,8 @@ let model = new PercolationModel(Number(gridSizeInput.value));
 let pendingVisualizationDraw = null;
 let pendingThresholdDraw = null;
 let thresholdRunId = 0;
+let lastThresholdSamples = [];
+let lastThresholdMean = 0;
 const hasThresholdUI = [
   thresholdGridSizeInput,
   thresholdGridSizeValue,
@@ -182,7 +186,9 @@ const hasThresholdUI = [
   runThresholdButton,
   rerunPreviewButton,
   thresholdCanvas,
-  thresholdContext
+  thresholdContext,
+  thresholdGraphCanvas,
+  thresholdGraphContext
 ].every(Boolean);
 
 function scheduleDraw(kind, drawFn) {
@@ -369,6 +375,153 @@ function updateThresholdResults(avg, deviation, low, high) {
   resultHigh.textContent = high.toFixed(4);
 }
 
+function resizeGraphCanvas() {
+  const displayWidth = thresholdGraphCanvas.clientWidth;
+  const scale = window.devicePixelRatio || 1;
+  const width = Math.max(1, Math.round(displayWidth * scale));
+  const height = Math.round(width * 0.55);
+
+  if (thresholdGraphCanvas.width !== width || thresholdGraphCanvas.height !== height) {
+    thresholdGraphCanvas.width = width;
+    thresholdGraphCanvas.height = height;
+  }
+}
+
+function sampleCurveValue(x, threshold, sharpness) {
+  return 1 / (1 + Math.exp(-(x - threshold) * sharpness));
+}
+
+function drawThresholdGraph(samples = lastThresholdSamples, meanValue = lastThresholdMean) {
+  if (!hasThresholdUI) {
+    return;
+  }
+
+  resizeGraphCanvas();
+  const ctx = thresholdGraphContext;
+  const width = thresholdGraphCanvas.width;
+  const height = thresholdGraphCanvas.height;
+  const axisFont = Math.max(10, Math.min(15, width / 58));
+  const tickFont = Math.max(9, Math.min(13, width / 64));
+  const labelFont = Math.max(10, Math.min(13, width / 62));
+  const margin = { top: 20, right: 18, bottom: 34, left: 40 };
+  const plotWidth = width - margin.left - margin.right;
+  const plotHeight = height - margin.top - margin.bottom;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.fillStyle = "#fffdf9";
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.strokeStyle = "rgba(23, 23, 23, 0.1)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i += 1) {
+    const y = margin.top + (plotHeight * i) / 4;
+    ctx.beginPath();
+    ctx.moveTo(margin.left, y);
+    ctx.lineTo(width - margin.right, y);
+    ctx.stroke();
+  }
+
+  for (let i = 0; i <= 5; i += 1) {
+    const x = margin.left + (plotWidth * i) / 5;
+    ctx.beginPath();
+    ctx.moveTo(x, margin.top);
+    ctx.lineTo(x, height - margin.bottom);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "#171717";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(margin.left, margin.top);
+  ctx.lineTo(margin.left, height - margin.bottom);
+  ctx.lineTo(width - margin.right, height - margin.bottom);
+  ctx.stroke();
+
+  ctx.fillStyle = "#5b564d";
+  ctx.font = `${axisFont}px Avenir Next`;
+  ctx.textAlign = "center";
+  ctx.fillText("fraction of open sites (p)", margin.left + plotWidth / 2, height - 10);
+
+  ctx.save();
+  ctx.translate(14, margin.top + plotHeight / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillText("percolation likelihood", 0, 0);
+  ctx.restore();
+
+  ctx.textAlign = "right";
+  ctx.fillText("0", margin.left - 10, height - margin.bottom + 4);
+  ctx.fillText("1", margin.left - 10, margin.top + 4);
+
+  ctx.textAlign = "center";
+  ctx.font = `${tickFont}px Menlo`;
+  for (let i = 0; i <= 5; i += 1) {
+    const x = margin.left + (plotWidth * i) / 5;
+    ctx.fillText((i / 5).toFixed(1), x, height - margin.bottom + 24);
+  }
+
+  if (!samples.length) {
+    ctx.fillStyle = "#7a746b";
+    ctx.font = `${axisFont}px Avenir Next`;
+    ctx.fillText("Run the simulation to generate the threshold graph.", margin.left + plotWidth / 2, margin.top + plotHeight / 2);
+    return;
+  }
+
+  const sorted = [...samples].sort((a, b) => a - b);
+  const showcased = sorted.slice(0, Math.min(8, sorted.length));
+
+  showcased.forEach((threshold, index) => {
+    const sharpness = 28 + index * 2.5;
+    ctx.strokeStyle = "rgba(30, 91, 255, 0.2)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    for (let step = 0; step <= 140; step += 1) {
+      const p = step / 140;
+      const yValue = sampleCurveValue(p, threshold, sharpness);
+      const x = margin.left + p * plotWidth;
+      const y = margin.top + (1 - yValue) * plotHeight;
+      if (step === 0) {
+        ctx.moveTo(x, y);
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+  });
+
+  ctx.strokeStyle = "#1e5bff";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  for (let step = 0; step <= 180; step += 1) {
+    const p = step / 180;
+    const yValue = sorted.filter((value) => value <= p).length / sorted.length;
+    const x = margin.left + p * plotWidth;
+    const y = margin.top + (1 - yValue) * plotHeight;
+    if (step === 0) {
+      ctx.moveTo(x, y);
+    } else {
+      ctx.lineTo(x, y);
+    }
+  }
+  ctx.stroke();
+
+  const thresholdX = margin.left + meanValue * plotWidth;
+  ctx.strokeStyle = "#df4b38";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(thresholdX, margin.top);
+  ctx.lineTo(thresholdX, height - margin.bottom);
+  ctx.stroke();
+
+  ctx.fillStyle = "#df4b38";
+  ctx.beginPath();
+  ctx.arc(thresholdX, margin.top + plotHeight * 0.18, 5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.textAlign = "left";
+  ctx.font = `${labelFont}px Menlo`;
+  ctx.fillText(`p* ≈ ${meanValue.toFixed(4)}`, Math.min(thresholdX + 10, width - margin.right - 96), margin.top + 18);
+}
+
 async function runThresholdSimulation(trials, size) {
   if (!hasThresholdUI) {
     return;
@@ -402,8 +555,11 @@ async function runThresholdSimulation(trials, size) {
   const avg = mean(thresholds);
   const deviation = stddev(thresholds, avg);
   const margin = 1.96 * deviation / Math.sqrt(trials);
+  lastThresholdSamples = thresholds;
+  lastThresholdMean = avg;
 
   updateThresholdResults(avg, deviation, avg - margin, avg + margin);
+  drawThresholdGraph();
   thresholdProgress.textContent = `Finished ${trials} trials.`;
   runThresholdButton.disabled = false;
   rerunPreviewButton.disabled = false;
@@ -479,6 +635,7 @@ window.addEventListener("resize", () => {
   }
   if (hasThresholdUI && document.getElementById("threshold").classList.contains("active")) {
     drawThresholdPreview();
+    drawThresholdGraph();
   }
 });
 
@@ -489,5 +646,6 @@ window.addEventListener("load", () => {
     updateThresholdOutputs(Number(thresholdGridSizeInput.value), Number(thresholdTrialsInput.value));
     thresholdPreviewModel = new PercolationModel(Number(thresholdGridSizeInput.value));
     drawThresholdPreview();
+    drawThresholdGraph();
   }
 });

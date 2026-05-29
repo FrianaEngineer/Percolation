@@ -88,6 +88,13 @@ body {
   color: var(--ink);
 }
 
+.tab-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
 .tab-button.active {
   background: var(--ink);
   color: #fff;
@@ -316,6 +323,34 @@ canvas {
 .threshold-visuals {
   display: grid;
   gap: 18px;
+}
+
+.graph-card h3 {
+  margin: 0 0 8px;
+  font-size: 1.55rem;
+}
+
+.graph-copy {
+  margin-top: 0;
+}
+
+.graph-frame {
+  margin-top: 18px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 23, 23, 0.08);
+  background:
+    linear-gradient(180deg, rgba(101, 181, 228, 0.08), transparent 45%),
+    #fffdf9;
+  max-width: 620px;
+  margin-inline: auto;
+}
+
+#threshold-graph {
+  display: block;
+  width: min(100%, 620px);
+  height: auto;
+  background: transparent;
 }
 
 .threshold-preview-card {
