@@ -400,11 +400,11 @@ function drawThresholdGraph(samples = lastThresholdSamples, meanValue = lastThre
   const ctx = thresholdGraphContext;
   const width = thresholdGraphCanvas.width;
   const height = thresholdGraphCanvas.height;
-  const axisFont = Math.max(10, Math.min(14, width / 78));
-  const tickFont = Math.max(10, Math.min(12, width / 82));
-  const labelFont = Math.max(11, Math.min(14, width / 74));
+  const axisFont = Math.max(10, Math.min(13, width / 88));
+  const tickFont = Math.max(9, Math.min(11, width / 92));
+  const labelFont = Math.max(10, Math.min(13, width / 82));
   const annotationFont = Math.max(12, Math.min(16, width / 68));
-  const margin = { top: 16, right: 16, bottom: 30, left: 34 };
+  const margin = { top: 16, right: 16, bottom: 38, left: 30 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
 
@@ -441,23 +441,23 @@ function drawThresholdGraph(samples = lastThresholdSamples, meanValue = lastThre
   ctx.fillStyle = "#5b564d";
   ctx.font = `${axisFont}px Avenir Next`;
   ctx.textAlign = "center";
-  ctx.fillText("fraction of open sites (p)", margin.left + plotWidth / 2, height - 10);
+  ctx.fillText("open-site fraction p", margin.left + plotWidth / 2, height - 8);
 
   ctx.save();
   ctx.translate(12, margin.top + plotHeight / 2);
   ctx.rotate(-Math.PI / 2);
-  ctx.fillText("percolation likelihood", 0, 0);
+  ctx.fillText("P(percolates)", 0, 0);
   ctx.restore();
 
   ctx.textAlign = "right";
-  ctx.fillText("0", margin.left - 10, height - margin.bottom + 4);
+  ctx.fillText("0", margin.left - 8, height - margin.bottom + 4);
   ctx.fillText("1", margin.left - 10, margin.top + 4);
 
   ctx.textAlign = "center";
   ctx.font = `${tickFont}px Menlo`;
   for (let i = 0; i <= 5; i += 1) {
     const x = margin.left + (plotWidth * i) / 5;
-    ctx.fillText((i / 5).toFixed(1), x, height - margin.bottom + 24);
+    ctx.fillText((i / 5).toFixed(1), x, height - margin.bottom + 18);
   }
 
   if (!samples.length) {
