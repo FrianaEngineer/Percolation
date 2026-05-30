@@ -379,7 +379,7 @@ function resizeGraphCanvas() {
   const displayWidth = thresholdGraphCanvas.clientWidth;
   const scale = window.devicePixelRatio || 1;
   const width = Math.max(1, Math.round(displayWidth * scale));
-  const height = Math.round(width * 0.55);
+  const height = Math.round(width * 0.46);
 
   if (thresholdGraphCanvas.width !== width || thresholdGraphCanvas.height !== height) {
     thresholdGraphCanvas.width = width;
@@ -400,10 +400,11 @@ function drawThresholdGraph(samples = lastThresholdSamples, meanValue = lastThre
   const ctx = thresholdGraphContext;
   const width = thresholdGraphCanvas.width;
   const height = thresholdGraphCanvas.height;
-  const axisFont = Math.max(10, Math.min(15, width / 58));
-  const tickFont = Math.max(9, Math.min(13, width / 64));
-  const labelFont = Math.max(10, Math.min(13, width / 62));
-  const margin = { top: 20, right: 18, bottom: 34, left: 40 };
+  const axisFont = Math.max(10, Math.min(14, width / 78));
+  const tickFont = Math.max(10, Math.min(12, width / 82));
+  const labelFont = Math.max(11, Math.min(14, width / 74));
+  const annotationFont = Math.max(12, Math.min(16, width / 68));
+  const margin = { top: 16, right: 16, bottom: 30, left: 34 };
   const plotWidth = width - margin.left - margin.right;
   const plotHeight = height - margin.top - margin.bottom;
 
@@ -443,7 +444,7 @@ function drawThresholdGraph(samples = lastThresholdSamples, meanValue = lastThre
   ctx.fillText("fraction of open sites (p)", margin.left + plotWidth / 2, height - 10);
 
   ctx.save();
-  ctx.translate(14, margin.top + plotHeight / 2);
+  ctx.translate(12, margin.top + plotHeight / 2);
   ctx.rotate(-Math.PI / 2);
   ctx.fillText("percolation likelihood", 0, 0);
   ctx.restore();
@@ -514,12 +515,22 @@ function drawThresholdGraph(samples = lastThresholdSamples, meanValue = lastThre
 
   ctx.fillStyle = "#df4b38";
   ctx.beginPath();
-  ctx.arc(thresholdX, margin.top + plotHeight * 0.18, 5, 0, Math.PI * 2);
+  ctx.arc(thresholdX, margin.top + plotHeight * 0.16, 5.5, 0, Math.PI * 2);
   ctx.fill();
 
+  const annotationText = `p* ≈ ${meanValue.toFixed(4)}`;
+  ctx.font = `700 ${annotationFont}px Menlo`;
+  const annotationWidth = ctx.measureText(annotationText).width;
+  const annotationX = Math.min(Math.max(thresholdX + 12, margin.left + 6), width - margin.right - annotationWidth - 8);
+  const annotationY = margin.top + 18;
+
+  ctx.fillStyle = "rgba(255, 253, 249, 0.9)";
+  ctx.fillRect(annotationX - 6, annotationY - annotationFont + 1, annotationWidth + 12, annotationFont + 10);
+
+  ctx.fillStyle = "#df4b38";
   ctx.textAlign = "left";
-  ctx.font = `${labelFont}px Menlo`;
-  ctx.fillText(`p* ≈ ${meanValue.toFixed(4)}`, Math.min(thresholdX + 10, width - margin.right - 96), margin.top + 18);
+  ctx.font = `700 ${annotationFont}px Menlo`;
+  ctx.fillText(annotationText, annotationX, annotationY);
 }
 
 async function runThresholdSimulation(trials, size) {

@@ -163,7 +163,7 @@ button:disabled {
 
 .viz-layout,
 .threshold-layout {
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1.2fr);
   align-items: start;
 }
 
@@ -325,6 +325,10 @@ canvas {
   gap: 18px;
 }
 
+.graph-card {
+  padding: 20px 20px 18px;
+}
+
 .graph-card h3 {
   margin: 0 0 8px;
   font-size: 1.55rem;
@@ -335,21 +339,22 @@ canvas {
 }
 
 .graph-frame {
-  margin-top: 18px;
-  border-radius: 24px;
+  margin-top: 14px;
+  border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(23, 23, 23, 0.08);
   background:
     linear-gradient(180deg, rgba(101, 181, 228, 0.08), transparent 45%),
     #fffdf9;
-  max-width: 620px;
+  max-width: 860px;
   margin-inline: auto;
 }
 
 #threshold-graph {
   display: block;
-  width: min(100%, 620px);
+  width: min(100%, 860px);
   height: auto;
+  aspect-ratio: 2.15 / 1;
   background: transparent;
 }
 
